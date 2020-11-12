@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import json
+import re
 import time
 import pandas as pd
 from selenium import webdriver
@@ -66,46 +67,39 @@ def parse_content():
         except:
             price = ''
             
-        try:  
-            payway = ''
-            payways = soup.select('.item-detail-table')[0].find_all('span','vmiddle')
-            for pay in payways:
-                payway += pay.text + ' '
-            print(payway)
+        try:
+            sold_num = soup.find('strong','rt-text-x-large number').text #sold num
         except:
-            payway = ''
+            sold_num = ''
             
-        try:    
-            delivery = ''
-            delivery_way = soup.select('.item-detail-table')[1].find_all('span','vmiddle')
-            for deli in delivery_way:
-                delivery += deli.text + ' '
-            print(delivery)
+        try:
+            information = soup.find('div','item-info-detail').text.strip()
         except:
-            delivery = ''
+            information = ''
+        print(information)
             
         try:
             stock = soup.find('span','rt-ml-2x rt-text-label').text #stock
-            print(stock)
+            #print(stock)
         except:
             stock = ''
         try:   
             seller_board = soup.find('section','seller-board-body').text #seller_board
-            print(seller_board)
+            #print(seller_board)
         except:
             seller_board = ''
         
         try:
             seller_name = soup.find('div','seller-board').h3.text.strip() #seller_name
-            print(seller_name)
+           # print(seller_name)
         except:
             seller_name = ''
         
         df = pd.DataFrame([{'link':link,
                             'name':name,
                             'price':price,
-                            'payway':payway,
-                            'delivery_way':delivery,
+                            'sold_num':sold_num,
+                            'information':information,
                             'stock':stock,
                             'seller_board':seller_board,
                             'seller_name':seller_name}])
