@@ -8,6 +8,6 @@ python ruten_scrape.py
 input goods name,page total,file name
 
 ### GUI demo
-![](https://i.imgur.com/6Quv9fd.png)
+![](https://i.imgur.com/G5HynGe.jpg)
 
 
