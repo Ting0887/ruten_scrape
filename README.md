@@ -5,6 +5,6 @@ website link : https://chromedriver.chromium.org/downloads
 ### step 1
 python ruten_scrape.py
 ### step 2 
-input goods name in terminal, for example : moouse,ipad...
+input goods name,page total,file name
 
 
