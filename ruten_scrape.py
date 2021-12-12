@@ -2,15 +2,16 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import timeit
-import pandas as pd
+import csv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 import tkinter as tk
+from tkinter.ttk import *
 from PIL import Image,ImageTk
 from functools import partial
 
-def SearchProducts(search_name,total_page,file_name,t):
+def SearchProducts(search_name,total_page,file_name,t,progress,window):
     All_ProductsLink = []
     page  = int(total_page.get())
     search_name = search_name.get()
@@ -31,18 +32,22 @@ def SearchProducts(search_name,total_page,file_name,t):
         for item in data['Rows']:
             link = 'https://www.ruten.com.tw/item/show?' + item['Id']
             All_ProductsLink.append(link)
-        print(All_ProductsLink)
-            
-    parse_info(All_ProductsLink,file_name,t)
+        print(All_ProductsLink)           
+    parse_info(All_ProductsLink,file_name,t,progress,window)
 
-def parse_info(All_ProductsLink,file_name,t):
-    all_result = []
+def parse_info(All_ProductsLink,file_name,t,progress,window):
     driverPath = 'C:/Users/lutin/chromedriver.exe'
     chrome_options = Options()
     chrome_options.add_argument("--window-size=1920,1080")
     chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--headless')
     browser = webdriver.Chrome(driverPath,options=chrome_options)
     
+    #建立檔案
+    with open(file_name+'.csv','w',encoding='utf-8-sig',newline='') as csvf:
+        w = csv.writer(csvf)
+        w.writerow(['link','name','price','sold_num','payway','shipway','stock','seller_board','seller_name'])
+
     index = 1
     for link in All_ProductsLink:
         browser.get(link)
@@ -61,27 +66,25 @@ def parse_info(All_ProductsLink,file_name,t):
         name = ProductName(soup)
         price = ProductPrice(soup)
         sold_num = ProductSoldCount(soup)
-        payway = ProductPayway(soup)
-        shipway = ProductShipway(soup)
+        payway = ProductPayway(soup,sold_num)
+        shipway = ProductShipway(soup,sold_num)
         stock = ProductStock(soup)
         seller_board = ProductBoard(soup)
         seller_name = ProductSeller(soup)
         
-        product = {'link':link,'name':name,
-                   'price':price,'sold_num':sold_num,
-                   'payway':payway,'shipway':shipway,
-                   'stock':stock,'seller_board':seller_board,
-                   'seller_name':seller_name}
-        print(product)
+        result = [link,name,price,sold_num,payway,shipway,stock,seller_board,seller_name]
+        print(result)
+
+        progress['value']+=1
+        window.update_idletasks()        
+        
         msg = '第{}筆資料完成!'.format(index)
         t.insert('insert',msg+'\n')
         t.update()
         index += 1
         
-        df = pd.DataFrame([product])
-        all_result.append(df)  
+        OutputData(result,file_name)
         
-    OutputData(all_result,file_name)
     t.insert('insert','已經完成資料爬取!')
     t.update()
 
@@ -106,24 +109,28 @@ def ProductSoldCount(soup):
         sold_num = 0
     return sold_num
 
-def ProductPayway(soup):
+def ProductPayway(soup,sold_num):
     payway = ''
-    try:
+    if sold_num != 0:
+        payways = soup.select('table.item-detail-table')[1].find_all('li')
+        for p in payways:
+            payway += p.text + '、'   
+    else:
         payways = soup.select('table.item-detail-table')[0].find_all('li')
         for p in payways:
             payway += p.text + '、'   
-    except:
-        pass
     return payway[:-1].replace('\n','').replace('  ','')
         
-def ProductShipway(soup):
+def ProductShipway(soup,sold_num):
     shipway = ''
-    try:
+    if sold_num !=0:
+        shipways = soup.select('table.item-detail-table')[2].find_all('li')
+        for s in shipways:
+            shipway += s.text + '、'
+    else:
         shipways = soup.select('table.item-detail-table')[1].find_all('li')
         for s in shipways:
             shipway += s.text + '、'
-    except:
-        pass
     return shipway[:-1].replace('\n','').replace('  ','')
 
 def ProductStock(soup):
@@ -148,9 +155,10 @@ def ProductSeller(soup):
         seller_name = ''
     return seller_name
 
-def OutputData(all_result,file_name):
-    df1 = pd.concat(all_result,ignore_index=True)
-    df1.to_excel(file_name+'.xlsx',index=0)
+def OutputData(result,file_name):
+    with open(file_name+'.csv','a+',newline='',encoding='utf-8-sig') as csvf:
+        w = csv.writer(csvf)
+        w.writerow(result)
 
 def get_image(file_name,width, height):
     im = Image.open(file_name).resize((width, height))
@@ -160,13 +168,15 @@ def main():
     window = tk.Tk()
     window.title("露天拍賣爬蟲")
     window.geometry("1200x800")
+    window.configure(background='black')
     window.resizable(width=False,height=False)
     
+    """
     canvas = tk.Canvas(window,height=1000,width=1500,bd=0, highlightthickness=0)
     im_root = get_image("D:/black.jpg",width=1500,height=1000)
     canvas.create_image(500, 500, image=im_root)
     canvas.pack()
-    
+    """
     #使用者輸入資訊
     L1 = tk.Label(window, bg='yellow', text='商品名稱',font=("SimHei",15))
     L2 = tk.Label(window, bg='yellow', text='頁數',font=("SimHei",15))
@@ -184,15 +194,24 @@ def main():
     b2.place(x=175, y=150)
     b3.place(x=175, y=200)
     
-    t = tk.Text(window, width=60, height=10, font=("SimHei", 18), selectforeground='red')  # 顯示多行文字
-    t.place(x=50, y=350)
+    #進度條
+    progress = Progressbar(window,style="green.Horizontal.TProgressbar",orient=tk.HORIZONTAL,length=500,mode='determinate')
+    L4 = tk.Label(window, bg='green', text='完成進度',font=("SimHei",15))
+    L4.place(x=175,y=290)
+    progress.grid(column=0, row=0)
+    progress.pack(padx=0,pady=300)
     
-    button = tk.Button(window,bg='red',text="開始爬取", width=10, height=2, command=partial(SearchProducts,b1,b2,b3,t),font=("SimHei", 15))
-    button.place(x=250,y=270,anchor=tk.CENTER)
+    #輸出文字結果
+    t = tk.Text(window, width=60, height=10, font=("SimHei", 18), selectforeground='red')  # 顯示多行文字
+    t.place(x=100, y=350)
+    
+    button = tk.Button(window,bg='red',text="開始爬取", width=10, height=2, command=partial(SearchProducts,b1,b2,b3,t,progress,window),font=("SimHei", 15))
+    button.place(x=850,y=165,anchor=tk.CENTER)
        
     window.mainloop()
     
 if __name__ == '__main__':
+    
     start = timeit.default_timer()
     main()
     stop = timeit.default_timer()
