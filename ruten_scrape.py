@@ -31,8 +31,14 @@ def SearchProducts(search_name,total_page,file_name,t,progress,window):
         for item in data['Rows']:
             link = 'https://www.ruten.com.tw/item/show?' + item['Id']
             All_ProductsLink.append(link)
-        print(All_ProductsLink)           
-    parse_info(All_ProductsLink,file_name,t,progress,window)
+        print(All_ProductsLink)   
+    
+    #確認是否有商品資料
+    if len(All_ProductsLink)!=0:        
+        parse_info(All_ProductsLink,file_name,t,progress,window)
+    else:
+        msg = '沒有此商品'
+        t.insert('insert',msg)
 
 def parse_info(All_ProductsLink,file_name,t,progress,window):
     driverPath = 'C:/Users/lutin/chromedriver.exe'
