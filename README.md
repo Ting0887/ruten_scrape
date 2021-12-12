@@ -7,4 +7,7 @@ python ruten_scrape.py
 ### step 2 
 input goods name,page total,file name
 
+### GUI demo
+![](https://i.imgur.com/B9izzUg.png)
+
 
