@@ -82,7 +82,7 @@ def parse_info(All_ProductsLink,file_name,t):
         all_result.append(df)  
         
     OutputData(all_result,file_name)
-    t.insert('inesrt','已經完成資料爬取!')
+    t.insert('insert','已經完成資料爬取!')
     t.update()
 
 def ProductName(soup):
@@ -111,11 +111,11 @@ def ProductPayway(soup):
     try:
         payways = soup.select('table.item-detail-table')[0].find_all('li')
         for p in payways:
-            payway += p.text + '、'
+            payway += p.text + '、'   
     except:
         pass
-    return payway
-
+    return payway[:-1].replace('\n','').replace('  ','')
+        
 def ProductShipway(soup):
     shipway = ''
     try:
@@ -124,7 +124,7 @@ def ProductShipway(soup):
             shipway += s.text + '、'
     except:
         pass
-    return shipway
+    return shipway[:-1].replace('\n','').replace('  ','')
 
 def ProductStock(soup):
     try:
@@ -156,7 +156,6 @@ def get_image(file_name,width, height):
     im = Image.open(file_name).resize((width, height))
     return ImageTk.PhotoImage(im)
 
-
 def main():
     window = tk.Tk()
     window.title("露天拍賣爬蟲")
@@ -181,9 +180,9 @@ def main():
     b2 = tk.Entry(window, font=("SimHei", 15), show=None, width=35)
     b3 = tk.Entry(window, font=("SimHei", 15), show=None, width=35)
 
-    b1.place(x=160, y=100)
-    b2.place(x=160, y=150)
-    b3.place(x=160, y=200)
+    b1.place(x=175, y=100)
+    b2.place(x=175, y=150)
+    b3.place(x=175, y=200)
     
     t = tk.Text(window, width=60, height=10, font=("SimHei", 18), selectforeground='red')  # 顯示多行文字
     t.place(x=50, y=350)
