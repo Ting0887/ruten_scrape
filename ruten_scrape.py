@@ -1,7 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 import time
-import timeit
 import csv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -49,6 +48,7 @@ def parse_info(All_ProductsLink,file_name,t,progress,window):
         w.writerow(['link','name','price','sold_num','payway','shipway','stock','seller_board','seller_name'])
 
     index = 1
+    all_progress = 100/len(All_ProductsLink)
     for link in All_ProductsLink:
         browser.get(link)
         time.sleep(1.5)
@@ -75,7 +75,7 @@ def parse_info(All_ProductsLink,file_name,t,progress,window):
         result = [link,name,price,sold_num,payway,shipway,stock,seller_board,seller_name]
         print(result)
 
-        progress['value']+=1
+        progress['value']+= all_progress
         window.update_idletasks()        
         
         msg = '第{}筆資料完成!'.format(index)
@@ -183,7 +183,7 @@ def main():
     L3 = tk.Label(window, bg='yellow', text='輸出檔名',font=("SimHei",15))
     
     L1.place(x=65,y=100)
-    L2.place(x=65,y=150)
+    L2.place(x=102,y=150)
     L3.place(x=65,y=200)
     
     b1 = tk.Entry(window, font=("SimHei", 15), show=None, width=35)
@@ -197,13 +197,15 @@ def main():
     #進度條
     progress = Progressbar(window,style="green.Horizontal.TProgressbar",orient=tk.HORIZONTAL,length=500,mode='determinate')
     L4 = tk.Label(window, bg='green', text='完成進度',font=("SimHei",15))
-    L4.place(x=175,y=290)
+    L4.place(x=240,y=295)
     progress.grid(column=0, row=0)
     progress.pack(padx=0,pady=300)
     
     #輸出文字結果
     t = tk.Text(window, width=60, height=10, font=("SimHei", 18), selectforeground='red')  # 顯示多行文字
     t.place(x=100, y=350)
+    scrollbar = tk.Scrollbar(window,command=t.yview)
+    t.configure(yscrollcommand=scrollbar.set)
     
     button = tk.Button(window,bg='red',text="開始爬取", width=10, height=2, command=partial(SearchProducts,b1,b2,b3,t,progress,window),font=("SimHei", 15))
     button.place(x=850,y=165,anchor=tk.CENTER)
@@ -211,9 +213,6 @@ def main():
     window.mainloop()
     
 if __name__ == '__main__':
-    
-    start = timeit.default_timer()
     main()
-    stop = timeit.default_timer()
-    runtime = stop - start
+
     
