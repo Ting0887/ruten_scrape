@@ -4,6 +4,8 @@ import time
 import csv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 import tkinter as tk
 from tkinter.ttk import *
@@ -41,12 +43,13 @@ def SearchProducts(search_name,total_page,file_name,t,progress,window):
         t.insert('insert',msg)
 
 def parse_info(All_ProductsLink,file_name,t,progress,window):
-    driverPath = 'C:/Users/lutin/chromedriver.exe'
+    driverPath = 'D:/chromedriver.exe'
     chrome_options = Options()
     chrome_options.add_argument("--window-size=1920,1080")
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--headless')
-    browser = webdriver.Chrome(driverPath,options=chrome_options)
+    chrome_options.add_experimental_option("detach", True)
+    
+    service = Service(ChromeDriverManager().install())
+    browser = webdriver.Chrome(service=service, options=chrome_options)
     
     #建立檔案
     with open(file_name+'.csv','w',encoding='utf-8-sig',newline='') as csvf:
@@ -77,8 +80,9 @@ def parse_info(All_ProductsLink,file_name,t,progress,window):
         stock = ProductStock(soup)
         seller_board = ProductBoard(soup)
         seller_name = ProductSeller(soup)
+        pro_img = ProductImage(soup)
         
-        result = [link,name,price,sold_num,payway,shipway,stock,seller_board,seller_name]
+        result = [link,name,price,sold_num,payway,shipway,stock,seller_board,seller_name,pro_img]
         print(result)
 
         progress['value']+= all_progress
@@ -103,10 +107,10 @@ def ProductName(soup):
 
 def ProductPrice(soup):
     try:
-        price = soup.find('div','item-purchase-stack').text #price
+        price = soup.find('div','item-purchase-stack').text.replace('直購價：$','') #price
     except:
         price = ''
-        return price
+    return price
     
 def ProductSoldCount(soup):
     try:
@@ -160,6 +164,13 @@ def ProductSeller(soup):
     except:
         seller_name = ''
     return seller_name
+
+def ProductImage(soup):
+    try:
+        pro_img = soup.find('div','item-gallery-main-image-wrap').img['src']
+    except:
+        pro_img = ''
+    return pro_img
 
 def OutputData(result,file_name):
     with open(file_name+'.csv','a+',newline='',encoding='utf-8-sig') as csvf:
@@ -220,5 +231,3 @@ def main():
     
 if __name__ == '__main__':
     main()
-
-    
